@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>RFM Customer Segmentation</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo-container">
+                <img src="../static/images/logo-transparent-png.png" alt="Project Logo" class="logo">
+                <h1 class="subtitle">Gain actionable insights by analyzing your customer data.</h1>
+            </div>
+            <!-- <h1 class="title">RFM Customer Segmentation</h1> -->
+            <!-- <p class="subtitle">Gain actionable insights by analyzing your customer data.</p> -->
+        </div>
+    </header>
+
+    <main class="main">
+        <section class="upload-section" id="uploadSection">
+            <h2>Upload Your Dataset</h2>
+            <form id="uploadForm" enctype="multipart/form-data" class="upload-form">
+                <input type="file" name="file" id="fileInput" accept=".csv" class="file-input">
+                <button type="submit" class="upload-button">Analyze</button>
+            </form>
+        </section>
+
+        <!-- Loader -->
+        <div id="overlay" class="overlay" style="display: none;"></div>
+        <div id="loader" class="loader" style="display: none;"></div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="error-message"></div>
+
+        <!-- Divs for displaying charts -->
+        <section id="charts-section" class="charts-section" style="display: none;">
+            <h2 class="results-heading">Results</h2>
+            <div class="chart-grid">
+
+                <!-- Pie Chart: Customer Segmentation -->
+                <div id="rfm-pie-chart" class="chart">
+                    <h3 class="chart-title">Customer Segmentation by Cluster</h3>
+                    <div id="pieChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('customer-pie-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "customer-pie-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>This pie chart divides customers into different groups (called "clusters") based on their shopping behavior. Each slice represents one group of customers, showing the percentage of the total customers that belong to that group.</p>
+                        <h4>Why is this useful?</h4>
+                        <p>It helps businesses understand how their customers are categorized. For example, one cluster might represent loyal customers who buy frequently, while another cluster might represent new customers who have just started shopping.</p>
+                        <h4>How to read this chart:</h4>
+                        <p>Hover over a slice to see:
+                            <ul>
+                                <li>The cluster number.</li>
+                                <li>The size of the cluster (number of customers).</li>
+                                <li>The percentage of customers in that cluster.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4> <p>This chart tells you how your customers are grouped based on their shopping habits.</p>
+                    </div>
+                </div>
+
+                <!-- Radar Chart: RFM -->
+                <div id="rfm-radar-chart" class="chart">
+                    <h3 class="chart-title">Average RFM Characteristics by Cluster</h3>
+                    <div id="radarChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('rfm-segmentation-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "rfm-segmentation-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>This radar chart compares the average <strong>RFM</strong> values for the customer groups:</p>
+                        <ul>
+                            <li><strong>Recency</strong>: How recently a customer made a purchase (lower is better).</li>
+                            <li><strong>Frequency</strong>: How often a customer makes purchases (higher is better).</li>
+                            <li><strong>Monetary</strong>: How much money a customer spends (higher is better).</li>
+                        </ul>
+                        <h4>Why is this useful?</h4>
+                        <p>It gives a clear picture of how each customer group behaves. One group might shop frequently but spend less money, while another group might spend a lot but shop less often.</p>
+                        <h4>How to read this chart:</h4>
+                        <p>Each axis (Recency, Frequency, Monetary) shows the average value for a specific group. A larger area covered on the chart means the group performs better in those metrics.</p>
+                        <h4>In simple terms:</h4> <p> This chart helps you see the strengths and weaknesses of each customer group.</p>
+                    </div>
+                </div>
+
+                <!-- Donut Chart: Proportion of Purchases by Price Range -->
+                <div id="price-range-donut-chart" class="chart">
+                    <h3 class="chart-title">Proportion of Purchases by Price Range</h3>
+                    <div id="priceRangeChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('price-range-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "price-range-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>
+                            This donut chart illustrates the distribution of customer purchases across various price ranges, categorizing transactions into segments like "Low," "Medium," "High," and more. Each segment represents the proportion of purchases that fall within a specific price range.
+                        </p>
+                        <h4>Why is this useful?</h4>
+                        <p>
+                            Understanding the distribution of purchases by price range helps in:
+                            <ul>
+                                <li>Identifying the most common price points preferred by customers.</li>
+                                <li>Evaluating the effectiveness of pricing strategies and product offerings.</li>
+                                <li>Spotting opportunities for upselling or creating premium product lines.</li>
+                                <li>Determining areas to focus on for targeted promotions or discounts.</li>
+                            </ul>
+                            By analyzing these patterns, businesses can align their pricing and marketing strategies with customer preferences.
+                        </p>
+                        <h4>How to interpret the chart:</h4>
+                        <p>
+                            <ul>
+                                <li>Each segment of the donut represents a price range (e.g., "Low (0-50)" or "High (100-500)").</li>
+                                <li>The size of a segment corresponds to the proportion of purchases in that range.</li>
+                                <li>Hover over a segment to view detailed information, including:</li>
+                                <ul>
+                                    <li><b>Price Range:</b> The specific range of purchase amounts.</li>
+                                    <li><b>Percentage of Purchases:</b> The proportion of total purchases in this range.</li>
+                                    <li><b>Number of Purchases:</b> The total count of transactions in the range.</li>
+                                </ul>
+                                <li>The colors differentiate the categories for easy visual distinction, and the legend explains the segments.</li>
+                            </ul>
+                        </p>
+                        <h4>Key insights:</h4>
+                        <p>
+                            <ul>
+                                <li><b>Dominant category:</b> The largest segment highlights the price range where most transactions occur.</li>
+                                <li><b>Growth opportunities:</b> Smaller segments, like "Very High" or "Extremely High," could indicate untapped potential for premium products.</li>
+                                <li><b>Affordability trends:</b> A significant share in lower ranges (e.g., "Low (0-50)") suggests a price-sensitive customer base.</li>
+                                <li><b>Balanced offerings:</b> Evenly distributed segments imply a diverse product portfolio appealing to various customer groups.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4>
+                        <p>
+                            This chart shows how many purchases fall into different price ranges, making it easier to understand what your customers typically spend and where you might focus your efforts to grow sales.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Map Chart: Revenue By Country -->
+                <div id="revenue-by-country-map" class="chart">
+                    <h3 class="chart-title">Revenue By Country</h3>
+                    <div id="revenueByCountryMap" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('revenue-by-country-map-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "revenue-by-country-map-description" class="chart-info">
+                        <h4>What does this map show?</h4>
+                        <p>
+                            This choropleth map visualizes revenue generated by each country, using a log-transformed scale to highlight variations more effectively. The chart represents the intensity of revenue through a color gradient, making it easier to compare countries with vastly different revenue scales.
+                        </p>
+                        <h4>Why is this useful?</h4>
+                        <p>
+                            A global view of revenue distribution helps identify:
+                            <ul>
+                            <li>Which countries contribute the most to your business revenue.</li>
+                            <li>Underperforming regions that may need more focused marketing or sales efforts.</li>
+                            <li>Opportunities to expand operations in high-revenue countries or improve strategies in low-revenue regions.</li>
+                            </ul>
+                            For example, countries with high revenue might be great targets for loyalty programs, while low-revenue countries could be analyzed for market entry barriers or untapped potential.
+                        </p>
+                        <h4>How to read this map:</h4>
+                        <p>
+                            <ul>
+                                <li>Each country is shaded based on its log-transformed revenue, with darker shades indicating higher revenues.</li>
+                                <li>Hover over a country to see detailed information:
+                                    <ul>
+                                        <li><b>Log Revenue:</b> Revenue on a logarithmic scale for comparison.</li>
+                                        <li><b>Total Revenue:</b> Actual revenue generated.</li>
+                                        <li><b>Total Quantity:</b> The total quantity of products sold in that country.</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </p>
+                        <h4>Key insights:</h4>
+                        <p>
+                            <ul>
+                                <li>High-revenue countries may represent your core markets and require dedicated resources to maintain growth.</li>
+                                <li>Countries with significant quantities but lower revenue might indicate low-priced products or bulk purchases, suggesting a pricing strategy review.</li>
+                                <li>Underrepresented regions might reveal potential new markets for exploration.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4>
+                        <p>
+                            This map shows where your revenue comes from, helping you see which countries are performing well and where you might need to adjust your business strategies.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Line Chart: Montly Sales Trend -->
+                <div id="montly_sales-trend-line-chart" class="chart">
+                    <h3 class="chart-title">Montly Sales Trend</h3>
+                    <div id="monthlySalesTrendChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('montly_sales-trend-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "montly_sales-trend-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>
+                          This line chart visualizes the total monthly sales trend over time, helping you understand how your business revenue evolves month by month. Each data point represents the total sales for a specific month and year.
+                        </p>
+                        <h4>Why is this useful?</h4>
+                        <p>
+                          Analyzing monthly sales trends is crucial for:
+                          <ul>
+                            <li>Identifying seasonal patterns or recurring peaks in sales.</li>
+                            <li>Tracking growth trends and evaluating the impact of business decisions.</li>
+                            <li>Forecasting future performance based on historical data.</li>
+                            <li>Detecting potential sales dips that may need immediate attention.</li>
+                          </ul>
+                          By monitoring sales trends, you can plan inventory, marketing campaigns, and resource allocation more effectively.
+                        </p>
+                        <h4>How to interpret the chart:</h4>
+                        <p>
+                            <ul>
+                                <li>The x-axis represents time in the format "Month-Year" (e.g., "2024-01" for January 2024).</li>
+                                <li>The y-axis shows the total sales for each month.</li>
+                                <li>Hover over a data point to view detailed information, including:
+                                    <ul>
+                                        <li><b>Month-Year:</b> The specific time period.</li>
+                                        <li><b>Total Sales:</b> The total revenue generated during that month.</li>
+                                    </ul>
+                                </li>
+                                <li>Points with markers highlight the exact sales figures, and the connecting lines help visualize trends over time.</li>
+                            </ul>
+                        </p>
+                        <h4>Key insights:</h4>
+                        <p>
+                            <ul>
+                                <li><b>Growth trends:</b> Steady increases in sales over time indicate healthy business growth.</li>
+                                <li><b>Seasonal effects:</b> Peaks in sales during specific months could point to seasonal demand, special promotions, or holiday effects.</li>
+                                <li><b>Declines:</b> Sudden drops in sales may signal market changes, decreased demand, or operational issues.</li>
+                                <li><b>Stability:</b> Flat lines suggest consistent performance, ideal for certain business types like subscription-based services.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4>
+                        <p>
+                          This chart shows how your sales change over time, making it easy to spot good months, slow periods, and overall patterns in your business.
+                        </p>
+                    </div>
+                </div>                
+
+                <!-- Bar Chart: Top 10 Products by Sales Volume -->
+                <div id="top-products-sales-bar-chart" class="chart">
+                    <h3 class="chart-title">Top 10 Products by Sales Volume</h3>
+                    <div id="topProductsSalesChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('top-products-sales-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "top-products-sales-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>
+                            This horizontal bar chart lists the top 10 products with the highest sales volume. Each bar corresponds to a specific product (with its description and stock code), and its length represents the total quantity sold.
+                        </p>
+                        <h4>Why is this useful?</h4>
+                        <p>
+                            Analyzing top-selling products gives you a clear picture of what drives the majority of your sales. This information is vital for:
+                            <ul>
+                                <li>Ensuring you maintain sufficient stock levels to avoid shortages.</li>
+                                <li>Identifying trends in customer preferences.</li>
+                                <li>Focusing marketing efforts on popular products to further boost sales.</li>
+                                <li>Developing new products that align with these high-demand items.</li>
+                            </ul>
+                            For example, if certain products have consistently high sales, you may want to feature them prominently in marketing campaigns or bundle them with slower-moving inventory to increase overall sales.
+                        </p>
+                        <h4>How to read this chart:</h4>
+                        <p>
+                            <ul>
+                                <li>The x-axis represents the total quantity of products sold.</li>
+                                <li>The y-axis lists the product descriptions and stock codes.</li>
+                                <li>The length of each bar reflects the sales volume of the corresponding product.</li>
+                            </ul>
+                        </p>
+                        <h4>Key insights:</h4>
+                        <p>
+                            <ul>
+                                <li>Products with consistently high sales volumes may reflect seasonal trends, popular categories, or market demands.</li>
+                                <li>Outliers in the list may indicate products with unexpected success, worthy of deeper analysis.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4>
+                        <p>
+                            This chart shows which products your customers love the most, helping you make smart decisions about inventory, marketing, and future product development.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bar Chart: Top 10 Products with Highest Return Rates -->
+                <div id="top-product-return-bar-chart" class="chart">
+                    <h3 class="chart-title">Top 10 Products with Highest Return Rates</h3>
+                    <div id="topProductsReturnsChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('top-product-return-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "top-product-return-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>
+                            This horizontal bar chart highlights the top 10 products with the highest return rates. Each bar corresponds to a product, and its length represents the rate at which customers returned it.
+                        </p>
+                        <h4>Why is this useful?</h4>
+                        <p>
+                            Understanding return trends is crucial for identifying potential issues with your products or sales processes. High return rates could indicate:
+                            <ul>
+                                <li>Quality issues with the product (e.g., defects or misrepresentation).</li>
+                                <li>Inaccurate or misleading product descriptions.</li>
+                                <li>Customer dissatisfaction due to unmet expectations.</li>
+                            </ul>
+                            By identifying these products, you can take corrective action, such as improving quality control, revising product descriptions, or providing better support to customers.
+                        </p>
+                        <h4>How to read this chart:</h4>
+                        <p>
+                            <ul>
+                                <li>The x-axis represents the return rate (number of returns relative to total sales).</li>
+                                <li>The y-axis lists the product descriptions and stock codes.</li>
+                                <li>The length of each bar reflects the return rate of the corresponding product.</li>
+                            </ul>
+                        </p>
+                        <h4>Key insights:</h4>
+                        <p>
+                            <ul>
+                                <li>Products with high return rates may need immediate attention to prevent further customer dissatisfaction.</li>
+                                <li>Comparing return rates with sales volumes can provide a balanced view of overall product performance.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4>
+                        <p>
+                            This chart identifies which products are returned the most, helping you pinpoint potential issues and improve customer satisfaction.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bar Chart: Top 10 Customers with Most Products Bought -->
+                <div id="top-customers-bar-chart" class="chart">
+                    <h3 class="chart-title">Top 10 Customers with Most Products Bought</h3>
+                    <div id="topCustomersChart" class="chart-container"></div>
+                    <div class="toggle-container">
+                        <button class="toggle-description" onclick="toggleDescription('top-customers-description')">
+                            <span class="toggle-icon">▼</span>
+                            <span class="toggle-text">View Information</span>
+                        </button>
+                    </div>
+                    <div id = "top-customers-description" class="chart-info">
+                        <h4>What does this chart show?</h4>
+                        <p>This bar chart displays the top 10 customers who purchased the highest quantity of products from your business. Each
+                            bar corresponds to a unique CustomerID, representing the total number of products they bought.</p>
+                        <h4>Why is this useful?</h4>
+                        <p>Understanding your top customers can help you identify and prioritize your most valuable clientele. These customers
+                            likely drive a significant portion of your revenue, making them ideal candidates for targeted promotions, loyalty
+                            programs, or exclusive offers. For example, businesses can use this information to send personalized thank-you
+                            messages or exclusive discounts to these high-value customers.</p>
+                        <h4>How to read this chart:</h4>
+                        <p>
+                            <ul>
+                                <li>The x-axis represents the CustomerIDs of the top buyers.</li>
+                                <li>The y-axis represents the total number of products purchased by each customer.</li>
+                                <li>The height of each bar indicates the scale of their purchases.</li>
+                            </ul>
+                        </p>
+                        <h4>Key insights:</h4>
+                        <p>
+                            <ul>
+                                <li>The chart highlights which customers are consistently buying large volumes, potentially indicating strong loyalty
+                                    or bulk purchasing needs.</li>
+                                <li>Disparities between bars can reveal the gap between your top customers and others, showing potential to grow
+                                    relationships with mid-tier customers.</li>
+                            </ul>
+                        </p>
+                        <h4>In simple terms:</h4>
+                        <p>
+                            This chart shows who your best customers are and how many products they’ve purchased, enabling you to focus your
+                            marketing and sales efforts more effectively.
+                        </p>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Analyze Again Button -->
+        <div id="analyze-again-section" class="analyze-again-section" style="display: none;">
+            <button id="analyzeAgainButton" class="analyze-again-button">Upload Another File</button>
+        </div>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a>.</p><br/>
+            <p>
+                View on <a href="https://github.com/yourrepo" target="_blank">GitHub</a>.
+            </p>
+        </div>
+    </footer>    
+    
+</body>
+</html>
